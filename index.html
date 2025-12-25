@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Покер 1 на 1 с ботом</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #c62828, #b71c1c);
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  #game {
+    max-width: 950px;
+    margin: 0 auto;
+    background: #d32f2f;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  }
+  .section {
+    margin-bottom: 20px;
+  }
+  h2 {
+    margin-bottom: 10px;
+    font-size: 1.3em;
+    text-align: center;
+  }
+  /* Стол с слотами */
+  #table {
+    position: relative;
+    height: 180px;
+    background: #8b0000;
+    border-radius: 10px;
+    margin: 10px 0;
+    padding: 10px;
+  }
+  .slot {
+    position: absolute;
+    width: 80px;
+    height: 120px;
+    background: #a52a2a;
+    border-radius: 8px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 24px;
+    color: #fff;
+  }
+  /* Позиции слотов для карт игроков */
+  #player-slot { bottom: 10px; left: calc(50% - 150px); }
+  #dealer-slot { bottom: 10px; right: calc(50% - 150px); }
+  /* Карты */
+  .card {
+    width: 70px;
+    height: 100px;
+    border-radius: 10px;
+    background: #fff;
+    color: #000;
+    font-weight: bold;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    margin: 0 10px;
+    position: relative;
+  }
+  /* Колода с количеством карт */
+  #deck-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    position: relative;
+  }
+  #deck {
+    width: 80px;
+    height: 120px;
+    background: #b71c1c;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  #deck:after {
+    content: attr(data-count);
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: red;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  /* Анимационная карта */
+ .animated-card {
+    position: absolute;
+    width: 70px;
+    height: 100px;
+    border-radius: 10px;
+    background: #fff;
+    border: 2px solid #000;
+    font-weight: bold;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    z-index: 999;
+    transition: all 0.8s ease;
+  }
+  #buttons {
+    text-align: center;
+    margin-top: 15px;
+  }
+  button {
+    background: #fff;
+    color: #c62828;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background: #ef9a9a;
+  }
+  #result {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 1.3em;
+  }
+</style>
+</head>
+<body>
+<h1>Покер 1 на 1 с ботом</h1>
+<div id="game">
+  <!-- Таблица с слотами под карты -->
+  <div id="table">
+    <div id="player-slot" class="slot">Ваши карты</div>
+    <div id="dealer-slot" class="slot">Бот</div>
+  </div>
+
+  <!-- Руки игроков -->
+  <div style="text-align:center; margin-top:10px;">
+    <div style="display:flex; justify-content: center;" id="player-hand"></div>
+  </div>
+  <div style="text-align:center; margin-top:10px;">
+    <div style="display:flex; justify-content: center;" id="dealer-hand"></div>
+  </div>
+
+  <!-- Колода -->
+  <div id="deck-container">
+    <div id="deck" data-count="52">Колода</div>
+  </div>
+
+  <!-- Кнопки -->
+  <div id="buttons">
+    <button id="dealBtn">Начать игру</button>
+    <button id="foldBtn" disabled>Сдаться</button>
+    <button id="callBtn" disabled>Поставить</button>
+  </div>
+  <div id="result"></div>
+</div>
+
+<script>
+const suits = ['♥', '♦', '♣', '♠'];
+const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+let deck = [];
+let playerCards = [];
+let dealerCards = [];
+let gameActive = false;
+
+const playerHandDiv = document.getElementById('player-hand');
+const dealerHandDiv = document.getElementById('dealer-hand');
+const resultDiv = document.getElementById('result');
+const dealBtn = document.getElementById('dealBtn');
+const foldBtn = document.getElementById('foldBtn');
+const callBtn = document.getElementById('callBtn');
+const deckDiv = document.getElementById('deck');
+
+function createDeck() {
+  deck = [];
+  for (let suit of suits) {
+    for (let rank of ranks) {
+      deck.push({suit, rank});
+    }
+  }
+}
+
+function shuffleDeck() {
+  for (let i = deck.length -1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+}
+
+function updateDeckCount() {
+  document.getElementById('deck').setAttribute('data-count', deck.length);
+  if (deck.length === 0) {
+    document.getElementById('deck').style.display = 'none';
+  } else {
+    document.getElementById('deck').style.display = 'flex';
+  }
+}
+
+function showCards() {
+  playerHandDiv.innerHTML = '';
+  dealerHandDiv.innerHTML = '';
+  for (let card of playerCards) {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.textContent = card.rank + card.suit;
+    playerHandDiv.appendChild(div);
+  }
+  for (let card of dealerCards) {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.textContent = card.rank + card.suit;
+    dealerHandDiv.appendChild(div);
+  }
+}
+
+function evaluateHand(cards) {
+  const ranksCount = {};
+  for (let c of cards) {
+    ranksCount[c.rank] = (ranksCount[c.rank] || 0) + 1;
+  }
+  const counts = Object.values(ranksCount).sort((a,b)=>b-a);
+  if (counts[0] === 4) return 'Каре';
+  if (counts[0] === 3 && counts[1] === 2) return 'Фуллхаус';
+  if (counts[0] === 3) return 'Тройка';
+  if (counts[0] === 2 && counts.length === 3) return 'Две пары';
+  if (counts[0] === 2) return 'Пара';
+  return 'Высокая карта';
+}
+
+function getResult() {
+  const pRank = evaluateHand(playerCards);
+  const dRank = evaluateHand(dealerCards);
+  const order = ['Высокая карта', 'Пара', 'Две пары', 'Тройка', 'Фуллхаус', 'Каре'];
+  const pScore = order.indexOf(pRank);
+  const dScore = order.indexOf(dRank);
+  if (pScore > dScore) return 'Вы выиграли!';
+  if (pScore < dScore) return 'Бот выиграл!';
+  return 'Ничья!';
+}
+
+function startGame() {
+  createDeck();
+  shuffleDeck();
+  dealCards();
+  showCards();
+  updateDeckCount();
+  resultDiv.textContent = '';
+  document.getElementById('dealBtn').disabled = true;
+  document.getElementById('foldBtn').disabled = false;
+  document.getElementById('callBtn').disabled = false;
+  gameActive = true;
+}
+
+// Вытягивание карт с анимацией
+async function animateCardDraw(fromX, fromY, toX, toY, cardText) {
+  const cardElem = document.createElement('div');
+  cardElem.className = 'animated-card';
+  cardElem.textContent = cardText;
+  cardElem.style.left = fromX + 'px';
+  cardElem.style.top = fromY + 'px';
+  document.body.appendChild(cardElem);
+  await new Promise(r => setTimeout(r, 50));
+  cardElem.style.left = toX + 'px';
+  cardElem.style.top = toY + 'px';
+  await new Promise(r => setTimeout(r, 800));
+  document.body.removeChild(cardElem);
+}
+
+function getDeckPosition() {
+  const rect = document.getElementById('deck').getBoundingClientRect();
+  return {x: rect.left + rect.width/2 - 35, y: rect.top + rect.height/2 - 50};
+}
+
+function dealWithAnimation() {
+  const from = getDeckPosition();
+  const pPos = document.querySelector('#player-slot').getBoundingClientRect();
+  const dPos = document.querySelector('#dealer-slot').getBoundingClientRect();
+
+  // Вытягиваем карты для игрока
+  for (let i=0; i<2; i++) {
+    const toX = pPos.left + 10 + i*80;
+    const toY = pPos.top + 10;
+    const cardText = deck[deck.length - 2 + i].rank + deck[deck.length - 2 + i].suit;
+    animateCardDraw(from.x, from.y, toX, toY, cardText);
+  }
+  // Вытягиваем карты для бота
+  for (let i=0; i<2; i++) {
+    const toX = dPos.left + 10 + i*80;
+    const toY = dPos.top + 10;
+    const cardText = deck[deck.length - 4 + i].rank + deck[deck.length - 4 + i].suit;
+    animateCardDraw(from.x, from.y, toX, toY, cardText);
+  }
+
+  // После анимации показываем карты
+  setTimeout(() => {
+    showCards();
+  }, 900);
+}
+
+document.getElementById('dealBtn').onclick = () => {
+  createDeck();
+  shuffleDeck();
+  dealCards();
+
+  updateDeckCount();
+
+  dealWithAnimation();
+
+  document.getElementById('result').textContent = '';
+  document.getElementById('dealBtn').disabled = true;
+  document.getElementById('foldBtn').disabled = false;
+  document.getElementById('callBtn').disabled = false;
+  gameActive = true;
+};
+
+document.getElementById('foldBtn').onclick = () => {
+  if (!gameActive) return;
+  document.getElementById('result').textContent = 'Вы сдались. Бот выиграл!';
+  endGame();
+};
+
+document.getElementById('callBtn').onclick = () => {
+  if (!gameActive) return;
+  const decision = Math.random() < 0.5 ? 'поставил' : 'пас';
+  if (decision === 'поставил') {
+    document.getElementById('result').textContent = 'Бот поставил. Ваш ход.';
+  } else {
+    document.getElementById('result').textContent = 'Бот пасует. Вы выиграли!';
+  }
+  endGame();
+};
+
+function endGame() {
+  document.getElementById('dealBtn').disabled = false;
+  document.getElementById('foldBtn').disabled = true;
+  document.getElementById('callBtn').disabled = true;
+  gameActive = false;
+}
+</script>
+</body>
+</html>
