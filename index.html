@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Запрещённый сайт</title>
+<title>Black Jack</title>
 <style>
   body {
     margin: 0;
@@ -15,8 +15,45 @@
     font-family: Arial, sans-serif;
     color: white;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
+  }
+  #balance {
+    font-size: 2em;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: rgba(0,0,0,0.5);
+    border-radius: 10px;
+    max-width: 90%;
+    text-align: center;
+  }
+  h1 {
+    margin-top: 30px;
+  }
+  /* Основной контейнер игры */
+  #gameContainer {
+    margin-top: 30px;
+    width: 90%;
+    max-width: 800px;
+    padding: 20px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 15px;
+  }
+  /* Пример — кнопка для начала игры или других действий */
+  button {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    margin-top: 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: #00cccc;
+    color: #000;
+    transition: background-color 0.3s;
+  }
+  button:hover {
+    background-color: #009999;
   }
 </style>
 <script>
@@ -26,9 +63,58 @@
       e.preventDefault();
     }
   }, { passive: false });
+
+  // Получение параметра URL
+  function getUrlParam(param) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(param);
+  }
+
+  // Загрузка и отображение баланса
+  window.onload = function() {
+    const userId = getUrlParam('id');
+    const balanceDiv = document.getElementById('balance');
+    if (userId) {
+      fetch('https://raw.githubusercontent.com/SaweNap/dfjghdfifgJSON/main/users.json')
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(users => {
+          const user = users.find(u => u.id.toString() === userId.toString());
+          if (user) {
+            balanceDiv.textContent = `Ваш баланс: ${user.balance} ₽`;
+          } else {
+            balanceDiv.textContent = 'Пользователь не найден';
+          }
+        })
+        .catch(() => {
+          balanceDiv.textContent = 'Ошибка загрузки данных';
+        });
+    } else {
+      balanceDiv.textContent = 'ID пользователя не указан';
+    }
+  };
+
+  // Тут ты можешь вставить свою логику для игры
+  // Например, обработка карточной игры, ставки и т.п.
 </script>
 </head>
 <body>
-<h1>Добро пожаловать!</h1>
+
+<h1>Добро пожаловать в Blackjack!</h1>
+<div id="balance">Загрузка баланса...</div>
+
+<div id="gameContainer">
+  <h2>Игра Blackjack</h2>
+  <!-- Здесь можно вставить игру, например, карточки, ставки, кнопки -->
+  <p>Здесь будет реализована логика игры.</p>
+  <button id="startGame">Начать новую игру</button>
+</div>
+
+<script>
+  // Пример обработки кнопки "Начать игру"
+  document.getElementById('startGame').onclick = function() {
+    alert('Функционал запуска игры еще разрабатывается.');
+  };
+</script>
+
 </body>
 </html>
