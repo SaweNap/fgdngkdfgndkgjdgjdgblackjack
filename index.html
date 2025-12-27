@@ -17,104 +17,330 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    position: relative; /* Для позиционирования элементов внутри */
   }
+
+  #cardDeckImage {
+  position: fixed;
+  top: 280px;
+  right: 20px;
+  width: 50px; 
+  height: 80px;
+  border-radius: 8px;
+  z-index: 10;
+}
+
   #balance {
     font-size: 2em;
     margin-top: 20px;
     padding: 10px 20px;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(1, 53, 37, 0.596);
     border-radius: 10px;
     max-width: 90%;
     text-align: center;
   }
+
   h1 {
     margin-top: 30px;
   }
-  /* Основной контейнер игры */
+
   #gameContainer {
-    margin-top: 30px;
-    width: 90%;
-    max-width: 800px;
-    padding: 20px;
-    background: rgba(0,0,0,0.4);
-    border-radius: 15px;
-  }
-  /* Пример — кнопка для начала игры или других действий */
-  button {
-    padding: 10px 20px;
-    font-size: 1.2em;
     margin-top: 20px;
+  }
+
+  /* Обертка для кнопок */
+  #buttonsWrapper {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+  }
+
+  /* Кнопки */
+  .controlButton {
+    padding: 10px 20px;
+    margin-top: 390px;
+    font-size: 1em;
+    cursor: pointer;
     border: none;
     border-radius: 8px;
-    cursor: pointer;
-    background-color: #00cccc;
-    color: #000;
-    transition: background-color 0.3s;
+    background-color: #002c00;
+    color: white;
+    transition: all 0.3s;
   }
-  button:hover {
-    background-color: #009999;
+  .controlButton:hover {
+    opacity: 0.7;
+    background-color: #002c00;
+    transform: scale(1.05);
+  }
+
+  #chipsFooter {
+    margin-top: auto;
+    margin-bottom: 10px;
+  }
+
+  #chipsContainer {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  /* стиль фишек */
+  .chip {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .chip:hover {
+    transform: scale(1.1);
+  }
+  .chip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #betPile {
+    position: fixed;
+    bottom: 220px;
+    left: 20px;
+    width: 60px;
+    height: 225px;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    overflow: hidden;
+    background: rgba(11, 24, 0, 0.342);
+    border-radius: 20px;
+    padding: 5px;
+  }
+
+  .chipWrapper {
+    position: relative;
+    bottom: 10px;
+    width: 40px;
+    height: 40px;
+    margin-top: 16px;
+  }
+
+  .stackedChip {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .count {
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    font-size: 0.7em;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flying {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: all 0.8s ease-in-out;
+    z-index: 1000;
+  }
+  #dealerSlots {
+    display: flex;
+    gap: 10px;
+    transform: translateY(-600px); /* тоже поднять выше */
+    margin-left: 65px;
+  }
+  #playerSlots {
+    display: flex;
+    gap: 10px;
+    transform: translateY(-250px); /* поднимет их выше, подстрой по необходимости */
+    margin-left: 65px;
+  }
+
+  .slot {
+    width: 50px;
+    height: 80px;
+    border: 2px dashed #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slot span {
+    font-size: 1%;
+    color: #fff;
   }
 </style>
 <script>
-  // Запретить Ctrl + колесико мыши
-  document.addEventListener('wheel', function(e) {
-    if (e.ctrlKey) {
-      e.preventDefault();
-    }
-  }, { passive: false });
+  document.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
 
-  // Получение параметра URL
-  function getUrlParam(param) {
-    const params = new URLSearchParams(window.location.search);
-    return params.get(param);
+  const chips = [
+    { value: 10, src: "https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/10.png" },
+    { value: 50, src: "https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/50.png" },
+    { value: 100, src: "https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/100.png" },
+    { value: 500, src: "https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/500.png" }
+  ];
+
+  const betCounts = {10:0, 50:0, 100:0, 500:0};
+
+  const sound = new Audio('https://github.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/raw/main/pokerchip08.mp3');
+
+  // создаем кнопки
+  function createButtons() {
+    const wrapper = document.createElement('div');
+    wrapper.id = 'buttonsWrapper';
+
+    const stopBtn = document.createElement('button');
+    stopBtn.className = 'controlButton';
+    stopBtn.innerText = 'Стоп';
+
+    const addLaterBtn = document.createElement('button');
+    addLaterBtn.className = 'controlButton';
+    addLaterBtn.innerText = 'Взять';
+
+    wrapper.appendChild(stopBtn);
+    wrapper.appendChild(addLaterBtn);
+    document.body.insertBefore(wrapper, document.getElementById('chipsFooter'));
   }
 
-  // Загрузка и отображение баланса
-  window.onload = function() {
-    const userId = getUrlParam('id');
-    const balanceDiv = document.getElementById('balance');
-    if (userId) {
-      fetch('https://raw.githubusercontent.com/SaweNap/dfjghdfifgJSON/main/users.json')
-        .then(res => res.ok ? res.json() : Promise.reject())
-        .then(users => {
-          const user = users.find(u => u.id.toString() === userId.toString());
-          if (user) {
-            balanceDiv.textContent = `Ваш баланс: ${user.balance} ₽`;
-          } else {
-            balanceDiv.textContent = 'Пользователь не найден';
-          }
-        })
-        .catch(() => {
-          balanceDiv.textContent = 'Ошибка загрузки данных';
-        });
-    } else {
-      balanceDiv.textContent = 'ID пользователя не указан';
-    }
-  };
+  function selectBet(amount, event) {
+    const chipData = chips.find(c => c.value === amount);
+    const imgSrc = chipData.src;
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.className = 'flying';
+    document.body.appendChild(img);
+    const startX = event.clientX - 30;
+    const startY = event.clientY - 30;
+    const endX = document.getElementById('betPile').offsetLeft + 40;
+    const endY = document.getElementById('betPile').offsetTop + 20;
+    img.style.left = startX + 'px';
+    img.style.top = startY + 'px';
 
-  // Тут ты можешь вставить свою логику для игры
-  // Например, обработка карточной игры, ставки и т.п.
+    setTimeout(() => {
+      img.style.left = endX + 'px';
+      img.style.top = endY + 'px';
+      img.style.width = '40px';
+      img.style.height = '40px';
+      img.style.borderWidth = '2px';
+    }, 50);
+
+    img.addEventListener('transitionend', () => {
+      if (img.parentNode) {
+        img.remove();
+        sound.currentTime = 0;
+        sound.play();
+        let wrapper = document.querySelector(`#betPile .chipWrapper[data-amount="${amount}"]`);
+        if (wrapper) {
+          const countSpan = wrapper.querySelector('.count');
+          let currentCount = parseInt(countSpan.innerText);
+          currentCount++;
+          countSpan.innerText = currentCount;
+          betCounts[amount]++;
+        } else {
+          const newWrapper = document.createElement('div');
+          newWrapper.className = 'chipWrapper';
+          newWrapper.setAttribute('data-amount', amount);
+          const newChip = document.createElement('img');
+          newChip.src = imgSrc;
+          newChip.className = 'stackedChip';
+          betCounts[amount]++;
+          const countSpan = document.createElement('div');
+          countSpan.className = 'count';
+          countSpan.innerText = '1';
+          newWrapper.appendChild(newChip);
+          newWrapper.appendChild(countSpan);
+          document.getElementById('betPile').appendChild(newWrapper);
+        }
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    createButtons();
+    document.querySelectorAll('.chip').forEach((el, index) => {
+      el.onclick = (event) => {
+        selectBet(chips[index].value, event);
+      };
+    });
+    document.getElementById('startGame').onclick = () => {
+      let totalSum = 0;
+      for (const key in betCounts) {
+        totalSum += parseInt(key) * betCounts[key];
+      }
+      alert('Общая ставка: ' + totalSum + ' ₽');
+    };
+
+    // Создаем слоты для игрока и дилера
+    const playerSlotsContainer = document.createElement('div');
+    playerSlotsContainer.id = 'playerSlots';
+    document.body.appendChild(playerSlotsContainer);
+
+    const dealerSlotsContainer = document.createElement('div');
+    dealerSlotsContainer.id = 'dealerSlots';
+    document.body.appendChild(dealerSlotsContainer);
+
+    // добавляем 5 слотов для игрока
+    for (let i = 0; i < 5; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      playerSlotsContainer.appendChild(slot);
+    }
+
+    // добавляем 5 слотов для дилера
+    for (let i = 0; i < 5; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      dealerSlotsContainer.appendChild(slot);
+    }
+  });
 </script>
 </head>
 <body>
+<!-- Добавляем изображение колоды справа -->
+<img id="cardDeckImage" src="https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/koloda.jpeg" alt="Колода карт" />
 
-<h1>Добро пожаловать в Blackjack!</h1>
 <div id="balance">Загрузка баланса...</div>
-
 <div id="gameContainer">
-  <h2>Игра Blackjack</h2>
-  <!-- Здесь можно вставить игру, например, карточки, ставки, кнопки -->
-  <p>Здесь будет реализована логика игры.</p>
-  <button id="startGame">Начать новую игру</button>
+  <button id="startGame">Начать игру</button>
 </div>
 
-<script>
-  // Пример обработки кнопки "Начать игру"
-  document.getElementById('startGame').onclick = function() {
-    alert('Функционал запуска игры еще разрабатывается.');
-  };
-</script>
+<!-- Кнопки "Стоп" и "Добавить позже" -->
+<div id="buttonsWrapper"></div>
 
+<!-- Фишки -->
+<div id="chipsFooter">
+  <div id="chipsContainer">
+    <div class="chip"><img src="https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/10.png" alt="10"></div>
+    <div class="chip"><img src="https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/50.png" alt="50"></div>
+    <div class="chip"><img src="https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/100.png" alt="100"></div>
+    <div class="chip"><img src="https://raw.githubusercontent.com/SaweNap/fgdngkdfgndkgjdgjdgblackjack/refs/heads/main/500.png" alt="500"></div>
+  </div>
+</div>
+
+<div id="betPile"></div>
 </body>
 </html>
